@@ -17,35 +17,41 @@ In this lab, you will learn how to deploy a smart contract using the modern deve
 # Section-1: Development Environment Setup
 The first step is to set up our modern Web3 tools and local blockchain.
 
-1. First, we need to ensure you have Node.js installed. We will use Node Version Manager (NVM). Open your terminal and run:
-```shell
-nvm install 22.23
-nvm alias default 22.23
-node -v
-```
-You should see ```v22.23.x``` confirming the installation.
+1. Run these commands in your terminal to set up and check the lab version of Node.js.
 
-2. Next, we will install Foundry. Issue this command in your terminal:
-```shell
-curl -L https://foundry.paradigm.xyz | bash
-```
-![Foundry_Install](./_readme-image/foundry_install.png)
+   ```shell
+   nvm install 22.23
+   nvm alias default 22.23
+   node -v
+   ```
 
-The terminal should show foundryup path detected since we installed it last lab if not, please follow the last lab's procedure.
-Close and reopen your terminal, then run:
-```shell
-foundryup
-```
-![Foundry](./_readme-image/foundry.png)
+   You should see `v22.23.x` confirming the installation.
 
-Like before our Foundry toolkit will show an output like this to confirm our installation was correct. 
-3. Start your local blockchain node by simply typing:
-```shell
-anvil
-```
-![Anvil](./_readme-image/anvil.png)
+2. To install Foundry, run this command in your terminal.
 
-Note: Leave this terminal window open and running for the entire lab. You will see a list of 10 Accounts and their Private Keys. Each is pre-funded with 10,000 fake ETH.
+   ```shell
+   curl -L https://foundry.paradigm.xyz | bash
+   ```
+
+   ![Foundry installer output](./_readme-image/foundry_install.png)
+
+   Close and reopen your terminal and run the following command.
+
+   ```shell
+   foundryup
+   ```
+
+   ![Foundryup output](./_readme-image/foundry.png)
+
+3. Start your local blockchain node in the terminal.
+
+   ```shell
+   anvil
+   ```
+
+   ![Anvil output showing local accounts](./_readme-image/anvil.png)
+
+   Leave this terminal running for the entire lab. Anvil lists 10 accounts and their private keys. Each account starts with 10,000 local test ETH.
 
 ### Now we will run our MetaMask wallet, add our local network to it and import some wallets from the local chain.
 
@@ -76,7 +82,7 @@ Note: Do not pay heed to the yellow warnings and save it.
 
 ![Anvil_Admin](./_readme-image/anvil_admin.png)
 
-Note: Renaming this account as ```Anvil Admin``` is better for understanding. As this account will deploy all of our contracts by default due to being the 0 number wallet and also we will use its functionalities for our privileged features so it is better to rename it like this. Even if you delete this network the wallet address will remain the same for the local Anvil node.
+Rename this account **Anvil Admin** so it is easy to identify. In Section 2, you deploy the contract with Anvil Account 0. The constructor saves the deployer's address, `msg.sender`, as the contract admin.
 
 ### We need a decentralized storage anchor now. 
 
@@ -95,7 +101,11 @@ Show your teacher your Anvil terminal running, your MetaMask connected to the ``
 
 # Section-2: Smart Contract Development
 Now we will write and deploy our backend logic using Forge.
-1. Open a new terminal window (do not close Anvil) and create your project directory:
+
+### Create the Foundry project
+
+Keep Anvil running. In a second terminal, run these commands from the folder where you keep your lab projects. The last command initializes Foundry inside `election_dapp`.
+
 ```shell
 mkdir election_dapp
 cd election_dapp
@@ -103,13 +113,15 @@ forge init
 ```
 ![Forge_init](./_readme-image/forge_init.png)
 
-This should initialize a standard layout and environment for our Foundry project.
+### Create and fill `src/Voting.sol`
 
-2. Delete the default files inside the ```src/``` directory. Create a new file named ```Voting.sol```:
+From the `election_dapp` terminal, run this command to create the file. Keep the example `src/Counter.sol` file because the generated test and script import it.
+
 ```shell
 touch src/Voting.sol
 ```
-3. Open ```src/Voting.sol``` and paste the following code. Notice we have intentionally left placeholders (```TODO_SC-1``` and ```TODO_SC-2```) where we will add Events later.
+**Paste the entire Solidity block below into `src/Voting.sol` and save the file.** Leave the `TODO_SC` comments for Section 5.
+
 ```solidity
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
@@ -168,7 +180,10 @@ contract Voting {
     // TODO_SC-4: YOU WILL ADD THE RESET ELECTION FUNCTION HERE LATER
 }
 ```
-4. Deploy the contract to your Anvil node using your first account's private key. Run this command:
+### Deploy the contract
+
+From the `election_dapp` terminal, run the command below. It uses the default Anvil Account 0 key, so the deployed contract will recognize that account as admin.
+
 ```shell
 forge create src/Voting.sol:Voting --rpc-url http://127.0.0.1:8545 --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --broadcast
 ```
@@ -179,13 +194,19 @@ Show your teacher the successful deployment output and the ```Deployed to``` add
 
 # Section-3: DApp Skeleton & IPFS Setup
 We will now build the frontend to interact with our contract and Pinata.
-1. Inside your ```election_dapp``` folder, create a new directory called ```frontend``` and navigate into it. Create three files:
+
+### Create the frontend files
+
+Run these commands from the `election_dapp` terminal to create the three files used in this section.
+
 ```shell
 mkdir frontend
 cd frontend
 touch index.html ipfsHelper.js app.js
 ```
-2. Open ```index.html``` and paste this skeleton. It utilizes Bootstrap for quick styling and includes forms for our admin panel and voting logic.
+### Fill `frontend/index.html`
+
+**Paste the entire HTML block below into `frontend/index.html` and save the file.**
 
 ```html
 <!DOCTYPE html>
@@ -232,7 +253,6 @@ touch index.html ipfsHelper.js app.js
                 <input id="candidateName" class="form-control mb-2" placeholder="Candidate Name">
                 <input type="file" id="candidateImage" class="form-control mb-2">
                 <button onclick="App.addCandidate()" id="addBtn" class="btn btn-dark w-100">Add Candidate</button>
-                <button onclick="App.resetElection()" class="btn btn-danger w-100 mt-2">Reset Election</button>
             </div>
         </div>
     </div>
@@ -246,9 +266,10 @@ touch index.html ipfsHelper.js app.js
 </body>
 </html>
 ```
-3. Open ```ipfsHelper.js```. We will use this to bypass the blockchain entirely when uploading images, sending them straight to Pinata's servers. 
+### Fill `frontend/ipfsHelper.js`
 
-Paste your Pinata JWT here, replacing the JWT placeholder here.
+**Paste the entire JavaScript block below into `frontend/ipfsHelper.js`.** At `TODO_JS-1`, replace only `YOUR_JWT_TOKEN_HERE` with your Pinata JWT, keeping the quotation marks. Save the file. This helper sends the image to Pinata and returns the CID for the contract to store.
+
 ```javascript
 // ipfsHelper.js
 window.uploadToIPFS = async (file) =>{
@@ -269,11 +290,14 @@ window.uploadToIPFS = async (file) =>{
     } catch (error) { console.error("IPFS Error:", error); }
 };
 ```
-4. Finally, open ```app.js```. This is where Ethers.js bridges our frontend to Anvil. Paste this base code and make sure to update the ```CONTRACT_ADDRESS```. 
 ### Core Concept: Providers vs. Signers
 ```Provider```: ```ethers.BrowserProvider``` is a read-only gateway to the blockchain (via MetaMask). It lets you call view functions (like checking votes or candidate lists) for free because reading doesn't change state.
 
 ```Signer```: The Signer represents the user's private key. Any function that changes state (like ```addCandidate``` or ```vote```) requires a transaction to be signed and broadcasted, which costs gas and prompts MetaMask to pop up.
+
+### Fill `frontend/app.js`
+
+**Paste the entire JavaScript block below into `frontend/app.js`.** On the `CONTRACT_ADDRESS` line at the top, replace `0xYOUR_ADDRESS_HERE` with the `Deployed to` address from Checkpoint 2, keeping the quotation marks. Save the file and leave the `TODO_JS` comments for later sections.
 
 ```javascript
 // Update with your Deployed To address from Checkpoint 2
@@ -289,10 +313,8 @@ const CONTRACT_ABI = [
     "function hasVoted(address) view returns (uint256)", 
     "function addCandidate(string _name, string _ipfsImageHash)",
     "function vote(uint256 _candidateId)",
-    "function resetElection()",
     "event CandidateAdded(uint256 id, string name, string ipfsImageHash)",
     "event VotedEvent(uint256 indexed candidateId, address voter)",
-    "event ElectionReset(uint256 newElectionId)"
 ];
 
 const App = {
@@ -386,7 +408,9 @@ const App = {
 
 $(function() { App.init(); });
 ```
-5. Open ```index.html``` using VS Code Live Server Extension (Install the extension shown in the screenshot below). 
+### Open the DApp in your browser
+
+Open `frontend/index.html` using the VS Code Live Server extension shown below.
 
 ![Live_Server](./_readme-image/liveServer.png)
 
@@ -394,13 +418,17 @@ $(function() { App.init(); });
 
 # Checkpoint – 3:
 
-![Admin_page](./_readme-image/admin_page.png)
+Show your teacher the frontend correctly identifying your Admin account by displaying **Admin Controls**. The screenshot also shows the **Reset Election** button from the optional extension.
 
-Show your teacher the frontend correctly identifying your Admin account.
+![DApp showing Admin Controls for the admin account](./_readme-image/admin_page.png)
 
 # Section-4: Adding Functionality & The Manual Sync Problem
 Currently, our app connects to the blockchain, but we cannot add candidates or vote.
-1. Open ```app.js```. Replace ```TODO_JS-2``` with the function to add candidates via IPFS.
+
+### Add the candidate handler
+
+**In `frontend/app.js`, replace the entire `// TODO_JS-2` comment line inside `const App = { ... }` with the JavaScript block below.** Keep the trailing comma because this is a method in the `App` object.
+
 ```javascript
     addCandidate: async function() {
         const name = $("#candidateName").val();
@@ -419,7 +447,10 @@ Currently, our app connects to the blockchain, but we cannot add candidates or v
         $("#addBtn").text("Add Candidate").prop("disabled", false);
     },
 ```
-2. Replace ```TODO_JS-3``` with the function to cast a vote:
+### Add the vote handler
+
+**In `frontend/app.js`, replace the entire `// TODO_JS-3` comment line inside `const App = { ... }` with the JavaScript block below.** Keep the trailing comma and save the file.
+
 ```javascript
     castVote: async function() {
         const id = $("#candidatesSelect").val();
@@ -430,17 +461,17 @@ Currently, our app connects to the blockchain, but we cannot add candidates or v
         } catch (error) { alert("Vote failed. Check console."); }
     },
 ```
-3. Test the DApp:
+### Test the DApp
 
-- Ensure you are using your Admin account in MetaMask. Add a candidate (provide a name and an image file). Wait for the transaction to complete.
+- Select **Anvil Admin** in MetaMask. Enter a candidate name, select an image, and click **Add Candidate**. MetaMask opens a transaction request like the one below. The **Reset Election** button shown in the screenshot is added in the optional extension.
 
-![Candidate1](./_readme-image/candidate1.png)
+  ![MetaMask transaction request after clicking Add Candidate](./_readme-image/candidate1.png)
 
-- You will see a confirmation option or, notification like this for every transaction and also see the fee needed. Your transaction should be different from this which we can discuss.
+- Check the network and fee in MetaMask, then click **Confirm** and wait for the transaction to finish.
 
 - Notice anything wrong? The table does not update! You must manually refresh the page to see the candidate appear.
 
-- Like you imported the wallet of Admin account, import 3 more accounts via the Anvil Private keys and you could name them Anvil or, Account 1, 2, 3 for convinience.
+- Import Anvil **Account 1** into MetaMask using its private key, just as you imported the admin account. Use Account 1 as your voter.
 
 - Switch to Normal user account in MetaMask. Cast a vote. Again, the vote count stays at ```0``` until you manually refresh the browser.
 
@@ -448,31 +479,84 @@ Currently, our app connects to the blockchain, but we cannot add candidates or v
 
 In a modern DApp, making users hit "Refresh" to see if a blockchain transaction went through is unacceptable. We need to utilize Solidity Events to auto-sync the UI.
 
-# Checkpoint – 4: 
-Show your teacher your DApp. Add a candidate and cast a vote, demonstrating that you have to manually refresh the browser to see the state changes.
+# Checkpoint – 4:
 
-# Section-5: Event-Driven Auto-Sync & Election Reset
-Let's fix the manual reload issue by leveraging Ethereum's Event system.
+Use the vote from the Section 4 test for this checkpoint. Once the transaction confirms, show your teacher that the tally still reads `0`. Refresh the page and show that it now reads `1`. If you already refreshed, repeat the demonstration with an unused Anvil voter account and show the tally increase by one after the refresh.
 
-By using ```this.contract.on()```, Ethers.js quietly listens to the Anvil blockchain in the background. The exact millisecond Anvil mines a block containing your event, Ethers.js intercepts it and automatically re-runs your ```render()``` function.
+# Section-5: Event-Driven Auto-Sync
 
-1. Open ```src/Voting.sol```. We need to emit signals into the blockchain whenever state changes.
-At ```TODO_SC-1```, declare the events:
+After Anvil mines a transaction that emits an event, Ethers.js detects the log and calls `render()` to read the latest tally. Give the listener a few seconds to update the page.
+
+### Declare the contract events
+
+**In `src/Voting.sol`, replace the entire `// TODO_SC-1` comment line inside `contract Voting` with the Solidity block below.**
+
 ```solidity
     event CandidateAdded(uint256 id, string name, string ipfsImageHash);
     event VotedEvent(uint256 indexed candidateId, address voter);
+```
+
+### Emit an event when a candidate is added
+
+**In `src/Voting.sol`, replace the entire `// TODO_SC-2` comment line inside `addCandidate()` with the line below.** It goes after the assignment to `candidates[candidatesCount]`.
+
+```solidity
+        emit CandidateAdded(candidatesCount, _name, _ipfsImageHash);
+```
+
+### Emit an event when a vote is cast
+
+**In `src/Voting.sol`, replace the entire `// TODO_SC-3` comment line inside `vote()` with the line below.** It goes after `totalVotes++`. Save the file.
+
+```solidity
+        emit VotedEvent(_candidateId, msg.sender);
+```
+
+### Redeploy and update the contract address
+
+In the terminal at the `election_dapp` root, rerun the `forge create` command from [Section 2](#section-2-smart-contract-development). In `frontend/app.js`, replace the value of `CONTRACT_ADDRESS` with the new `Deployed to` address. This contract starts with an empty candidate list and a zero tally.
+
+### Add the browser event listeners
+
+**In `frontend/app.js`, replace the entire `// TODO_JS-4` comment line inside `const App = { ... }` with the JavaScript block below.** Keep the trailing comma.
+
+```javascript
+    listenForEvents: function() {
+        this.contract.on("VotedEvent", () => this.render());
+        this.contract.on("CandidateAdded", () => this.render());
+    },
+```
+
+### Start the listeners when the page connects
+
+**In `frontend/app.js`, replace the entire `// TODO_JS-5` comment line inside `init()` with the line below.** It goes immediately before `await this.render();`.
+
+```javascript
+                this.listenForEvents();
+```
+
+In the same file, find `castVote()` and remove the success `alert(...)` that asks students to refresh. Keep `await tx.wait();` and the error handler. Save the file.
+
+# Checkpoint – 5:
+
+1. Open the DApp on the new deployment. As **Anvil Admin**, add a fresh candidate. Wait for the candidate to appear automatically.
+2. Switch to **Account 1**, cast one vote, and confirm it in MetaMask. Give the listener a few seconds. Show your teacher the tally changing from `0` to `1` without refreshing.
+
+### Optional extension for Checkpoint 5
+
+If you want to try a full election, import Anvil **Accounts 2 and 3** into MetaMask. With Account 1's vote already counted, cast one vote from each new account. After the third vote, observe the **Election Ended!** banner.
+
+![Election results after the third vote, before resetting](./_readme-image/vote_end.png)
+
+To try resetting an election from the DApp, add the reset feature below.
+
+#### Add the contract reset function
+
+**In `src/Voting.sol`, replace the entire `// TODO_SC-4` comment line inside `contract Voting` with the Solidity block below.** The block declares the reset event and adds the admin-only function. Reset clears the current candidates and tally. It also increments `electionId` so earlier vote records no longer count in the new round. Save the file.
+
+```solidity
     event ElectionReset(uint256 newElectionId);
-```
-At ```TODO_SC-2``` (inside ```addCandidate```), emit the event:
-```solidity
-emit CandidateAdded(candidatesCount, _name, _ipfsImageHash);
-```
-At ```TODO_SC-3``` (inside ```vote```), emit the event:
-```solidity
-emit VotedEvent(_candidateId, msg.sender);
-```
-2. While we are modifying the contract, let's add the ability to run multiple elections. At ```TODO_SC-4```, add this logic. Notice we do not delete old data; we simply increment ```electionId``` to start a fresh voting round which can only be done by the Admin.
-```solidity
+
     function resetElection() public {
         require(msg.sender == admin, "Only admin can reset");
         for (uint256 i = 1; i <= candidatesCount; i++) {
@@ -484,25 +568,26 @@ emit VotedEvent(_candidateId, msg.sender);
         emit ElectionReset(electionId);
     }
 ```
-3. Redeploy your Contract: Since we altered the Solidity code, we must recompile and migrate. Run the deployment command from Section 2 again.
 
-CRITICAL: Copy the NEW ```Deployed to:``` address and update the ```CONTRACT_ADDRESS``` variable at the top of your ```app.js``` file!
+#### Connect the frontend to reset
 
-4. Now let's teach Javascript to listen for these events. Open ```app.js``` and replace ```TODO_JS-4``` with this function:
+Rerun the Section 2 deploy command from the `election_dapp` terminal. Update `CONTRACT_ADDRESS` in `frontend/app.js` with this deployment's address.
+
+**In `frontend/app.js`, insert the two lines below at the end of `CONTRACT_ABI`, immediately above the closing `];`.**
+
 ```javascript
-    listenForEvents: function() {
-        this.contract.on("VotedEvent", () => this.render());
-        this.contract.on("CandidateAdded", () => this.render());
+    "function resetElection()",
+    "event ElectionReset(uint256 newElectionId)"
+```
+
+**In `frontend/app.js`, insert the line below in `listenForEvents()`, directly after the `CandidateAdded` listener and before the closing `},`.**
+
+```javascript
         this.contract.on("ElectionReset", () => this.render());
-    },
 ```
-5. To initialize this listener, find ```TODO_JS-5``` inside the ```init``` function and add the function call:
-```javascript
-this.listenForEvents();
-```
-(Also, remove the ```alert``` instructing the user to refresh the page from your ```castVote``` function in ```app.js```, since it will now happen automatically!)
 
-6. Finally, let's wire up the Admin reset button. Replace ```TODO_JS-6```:
+**In `frontend/app.js`, replace the entire `// TODO_JS-6` comment line inside `const App = { ... }` with the JavaScript block below.** Save the file.
+
 ```javascript
     resetElection: async function() {
         try {
@@ -512,7 +597,15 @@ this.listenForEvents();
         } catch (error) { alert("Reset failed: " + error.message); }
     }
 ```
-![Vote_End](./_readme-image/vote_end.png)
 
-# Checkpoint – 5: 
-Open your DApp. Add a candidate. Notice the UI updates instantly without reloading! Cast 3 votes using different MetaMask accounts to trigger the "Election Ended!" banner. Finally, use the Admin account to Reset the election. Show your teacher the fully functioning, auto-syncing DApp to complete the lab.
+#### Add and test the Reset Election button
+
+**In `frontend/index.html`, paste the line below directly after the `Add Candidate` button inside the `adminArea` section.** Save the file.
+
+```html
+                <button onclick="App.resetElection()" class="btn btn-danger w-100 mt-2">Reset Election</button>
+```
+
+Open this latest deployment. As **Anvil Admin**, add a candidate, then cast a vote as **Account 1**. Switch back to **Anvil Admin**, click **Reset Election**, and confirm in MetaMask. Check that the candidate list clears. Add another candidate and verify that Account 1 can vote again in the new round.
+
+To see the banner and reset in the same run, cast all three votes on this latest deployment before resetting.
